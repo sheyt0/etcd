@@ -74,10 +74,11 @@ var (
 
 	// tls for connecting to etcd
 
-	grpcProxyCA                    string
-	grpcProxyCert                  string
-	grpcProxyKey                   string
-	grpcProxyInsecureSkipTLSVerify bool
+	grpcProxyCA                            string
+	grpcProxyCert                          string
+	grpcProxyKey                           string
+	grpcProxyInsecureSkipTLSVerify         bool
+	grpcProxyInsecureDisableRequireEmptyCN bool
 
 	// tls for clients connecting to proxy
 
@@ -161,6 +162,7 @@ func newGRPCProxyStartCommand() *cobra.Command {
 	cmd.Flags().StringVar(&grpcProxyKey, "key", "", "identify secure connections with etcd servers using this TLS key file")
 	cmd.Flags().StringVar(&grpcProxyCA, "cacert", "", "verify certificates of TLS-enabled secure etcd servers using this CA bundle")
 	cmd.Flags().BoolVar(&grpcProxyInsecureSkipTLSVerify, "insecure-skip-tls-verify", false, "skip authentication of etcd server TLS certificates (CAUTION: this option should be enabled only for testing purposes)")
+	cmd.Flags().BoolVar(&grpcProxyInsecureDisableRequireEmptyCN, "insecure-disable-require-empty-cn", false, "disable require empty CN for TLS certificates to connect to etcd server (CAUTION: this option should be enabled only for testing purposes)")
 
 	// client TLS for connecting to proxy
 	cmd.Flags().StringVar(&grpcProxyListenCert, "cert-file", "", "identify secure connections to the proxy using this TLS certificate file")
@@ -375,7 +377,7 @@ func newClientCfg(lg *zap.Logger, eps []string) (*clientv3.Config, error) {
 	}
 	cfg.PermitWithoutStream = grpcProxyPermitWithoutStream
 
-	tls := newTLS(grpcProxyCA, grpcProxyCert, grpcProxyKey, true)
+	tls := newTLS(grpcProxyCA, grpcProxyCert, grpcProxyKey, !grpcProxyInsecureDisableRequireEmptyCN)
 	if tls == nil && grpcProxyInsecureSkipTLSVerify {
 		tls = &transport.TLSInfo{}
 	}
